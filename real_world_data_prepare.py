@@ -31,39 +31,42 @@ if __name__ == '__main__':
     _, rO1, rO0 = t_learner_estimator(XO_fir, TO_fir, YO_fir, type=regressionType)
 
     # 生成第二份数据sec的potential outcome
-    PO_obs_1, PO_obs_0 = rO1.predict(X=XO_sec), rO0.predict(X=XO_sec)
+    PO_obs_1, PO_obs_0 = rO1.predict(X=XO_sec), rO0.predict(X=XO_sec)   # 这个是obs的回归结果，有偏的，不是用来算ite的
     PO_exp_1, PO_exp_0 = rE1.predict(X=XE_sec), rE0.predict(X=XE_sec)
 
-    # 生成index为2的ite
-    iteO, iteE = PO_obs_1 - PO_obs_0, PO_exp_1 - PO_exp_0
+    # 根据T选择, 这里生成的YO_used YE_used 将替换掉原数据集里的，作为训练用
+    YO_used = np.where(TO_sec == 1, PO_obs_1, PO_obs_0)
+    YE_used = np.where(TE_sec == 1, PO_exp_1, PO_exp_0)
+
+    # 根据无偏结果生成ite
+    obsY1, obsY0 = rE1.predict(X=XO_sec), rE0.predict(X=XO_sec)       # 无偏的，计算ite
+    iteO, iteE = obsY1 - obsY0, PO_exp_1 - PO_exp_0
 
     # S的部分也需要上述操作
     print('一共有 '+str(S.shape[1]) + ' 步短期结果')
-    PO_short_exp_1, PO_short_exp_0, PO_short_obs_1, PO_short_obs_0 =\
-        np.zeros_like(SE_sec), np.zeros_like(SE_sec),np.zeros_like(SO_sec),np.zeros_like(SO_sec)
+    SO_used, SE_used = np.zeros_like(SO_sec), np.zeros_like(SE_sec)
     for i in range(S.shape[1]):
         regressionType = 'mlp'  # 可以替换 linear mlp best kernelRidge ..
         _, rE1, rE0 = t_learner_estimator(XE_fir, TE_fir, SE_fir[:,i][:,None], type=regressionType)
         _, rO1, rO0 = t_learner_estimator(XO_fir, TO_fir, SO_fir[:,i][:,None], type=regressionType)
 
         # 生成sec的短期 potential outcome
-        PO_obs_1, PO_obs_0 = rO1.predict(X=XO_sec), rO0.predict(X=XO_sec)
+        PO_obs_1, PO_obs_0 = rO1.predict(X=XO_sec), rO0.predict(X=XO_sec)   # 这里是有偏的
         PO_exp_1, PO_exp_0 = rE1.predict(X=XE_sec), rE0.predict(X=XE_sec)
 
         # 放入集合存储
-        PO_short_exp_1[:,i] = PO_exp_1
-        PO_short_exp_0[:,i] = PO_exp_0
-        PO_short_obs_1[:,i] = PO_obs_1
-        PO_short_obs_0[:,i] = PO_obs_0
+        # 根据T选择
+        SO_used = np.where(TO_sec == 1, PO_obs_1, PO_obs_0)
+        SE_used = np.where(TE_sec == 1, PO_exp_1, PO_exp_0)
 
 
     # 最终用于训练的数据：
-    XE, TE, SE1, SE0, YE1, YE0 = XE_sec, TE_sec, PO_short_exp_1, PO_short_exp_0, PO_exp_1, PO_exp_0
-    XO, TO, SO1, SO0, YO1, YO0 = XO_sec, TO_sec, PO_short_obs_1, PO_short_obs_0, PO_obs_1, PO_obs_0
+    XE, TE, SE, YE = XE_sec, TE_sec, SO_used, YE_used
+    XO, TO, SO, YO = XO_sec, TO_sec, SE_used, YO_used
     iteO, iteE = iteO, iteE
 
     # 检查样本大小
-    print(XE.shape, TE.shape, SE1.shape, SE0.shape, YE1.shape, YE0.shape)
-    print(XO.shape, TO.shape, SO1.shape, SO0.shape, YO1.shape, YO0.shape)
+    print(XE.shape, TE.shape, SE.shape, YE.shape)
+    print(XO.shape, TO.shape, SO.shape, YO.shape)
     print(iteO.shape)
     print(iteE.shape)
