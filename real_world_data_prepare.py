@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
 
     # 最终用于训练的数据：
-    XE, TE, SE, YE = XE_sec, TE_sec, SO_used, YE_used
-    XO, TO, SO, YO = XO_sec, TO_sec, SE_used, YO_used
+    XE, TE, SE, YE = XE_sec, TE_sec, SE_used, YE_used
+    XO, TO, SO, YO = XO_sec, TO_sec, SO_used, YO_used
     iteO, iteE = iteO, iteE
 
     # 检查样本大小
