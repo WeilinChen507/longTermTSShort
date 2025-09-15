@@ -56,8 +56,8 @@ if __name__ == '__main__':
 
         # 放入集合存储
         # 根据T选择
-        SO_used = np.where(TO_sec == 1, PO_obs_1, PO_obs_0)
-        SE_used = np.where(TE_sec == 1, PO_exp_1, PO_exp_0)
+        SO_used[:,i] = np.where(TO_sec == 1, PO_obs_1, PO_obs_0)
+        SE_used[:,i] = np.where(TE_sec == 1, PO_exp_1, PO_exp_0)
 
 
     # 最终用于训练的数据：
